@@ -49,7 +49,6 @@ enum InstalledAppScanner {
         guard let info = NSDictionary(contentsOfFile: infoPath) as? [String: Any] else { return nil }
 
         let bundleID = info["CFBundleIdentifier"] as? String ?? ""
-        if bundleID.hasPrefix("com.apple.") && bundleID != "com.apple.AppStore" { return nil }
 
         let displayName = plistString(info["CFBundleDisplayName"])
             ?? plistString(info["CFBundleName"])

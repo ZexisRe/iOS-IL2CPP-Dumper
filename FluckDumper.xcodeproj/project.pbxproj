@@ -19,6 +19,7 @@
 		A10000312A3C7000001BCB01 /* InstalledAppTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000322A3C7000001BCB01 /* InstalledAppTarget.swift */; };
 		A10000332A3C7000001BCB01 /* InstalledAppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000342A3C7000001BCB01 /* InstalledAppScanner.swift */; };
 		A10000352A3C7000001BCB01 /* AppDecryptPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000362A3C7000001BCB01 /* AppDecryptPipeline.swift */; };
+		A10000372A3C7000001BCB01 /* Il2CppManualView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000382A3C7000001BCB01 /* Il2CppManualView.swift */; };
 		0092EE5B2A38AD8500B9F819 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0092EE5A2A38AD8500B9F819 /* Assets.xcassets */; };
 		0092EE5E2A38AD8500B9F819 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0092EE5D2A38AD8500B9F819 /* Preview Assets.xcassets */; };
 		0096B0E62A3B51DC007B54A7 /* AuxiliaryExecute in Frameworks */ = {isa = PBXBuildFile; productRef = 0096B0E52A3B51DC007B54A7 /* AuxiliaryExecute */; };
@@ -41,6 +42,7 @@
 		A10000322A3C7000001BCB01 /* InstalledAppTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppTarget.swift; sourceTree = "<group>"; };
 		A10000342A3C7000001BCB01 /* InstalledAppScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppScanner.swift; sourceTree = "<group>"; };
 		A10000362A3C7000001BCB01 /* AppDecryptPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDecryptPipeline.swift; sourceTree = "<group>"; };
+		A10000382A3C7000001BCB01 /* Il2CppManualView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Il2CppManualView.swift; sourceTree = "<group>"; };
 		0092EE5A2A38AD8500B9F819 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0092EE5D2A38AD8500B9F819 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		3DE674F62A3C61D9001BCB02 /* iOS-Dump */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "iOS-Dump"; path = "FluckDumper/iOS-Dump"; sourceTree = SOURCE_ROOT; };
@@ -78,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000022A3C7000001BCB01 /* MainMenuView.swift */,
+				A10000382A3C7000001BCB01 /* Il2CppManualView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -226,6 +229,7 @@
 				A10000312A3C7000001BCB01 /* InstalledAppTarget.swift in Sources */,
 				A10000332A3C7000001BCB01 /* InstalledAppScanner.swift in Sources */,
 				A10000352A3C7000001BCB01 /* AppDecryptPipeline.swift in Sources */,
+				A10000372A3C7000001BCB01 /* Il2CppManualView.swift in Sources */,
 				0092EE572A38AD8400B9F819 /* FluckDumperApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -372,7 +376,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.2;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zexis.iosil2cppdumper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -411,7 +415,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.2;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zexis.iosil2cppdumper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
