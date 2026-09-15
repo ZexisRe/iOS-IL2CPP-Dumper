@@ -6,7 +6,8 @@ import Foundation
 enum InstalledAppScanner {
     private static let bundleRoots = ["/var/containers/Bundle/Application"]
 
-    static func scan() -> [InstalledAppTarget] {
+    /// `checkEncryption`: only main executable cryptid (fast). Full list runs at decrypt time.
+    static func scan(checkEncryption: Bool = false) -> [InstalledAppTarget] {
         var results: [InstalledAppTarget] = []
         var seen = Set<String>()
         let fm = FileManager.default
@@ -18,7 +19,8 @@ enum InstalledAppScanner {
                 guard let apps = try? fm.contentsOfDirectory(atPath: appsDir) else { continue }
                 for appName in apps where appName.hasSuffix(".app") {
                     let appPath = (appsDir as NSString).appendingPathComponent(appName)
-                    guard let target = parseApp(at: appPath), seen.insert(target.id).inserted else { continue }
+                    guard let target = parseApp(at: appPath, checkEncryption: checkEncryption),
+                          seen.insert(target.id).inserted else { continue }
                     results.append(target)
                 }
             }
@@ -27,7 +29,7 @@ enum InstalledAppScanner {
         return results.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 
-    private static func parseApp(at appPath: String) -> InstalledAppTarget? {
+    private static func parseApp(at appPath: String, checkEncryption: Bool) -> InstalledAppTarget? {
         let infoPath = (appPath as NSString).appendingPathComponent("Info.plist")
         guard let info = NSDictionary(contentsOfFile: infoPath) as? [String: Any] else { return nil }
 
@@ -38,7 +40,21 @@ enum InstalledAppScanner {
         let executableName = info["CFBundleExecutable"] as? String
             ?? (appPath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
 
-        let encrypted = MachOEncryption.encryptedMachOPaths(inAppBundle: appPath).count
+        let encrypted: Int
+        if checkEncryption {
+            encrypted = MachOEncryption.encryptedMachOPaths(
+                inAppBundle: appPath,
+                executableName: executableName
+            ).count
+        } else {
+            let mainPath = (appPath as NSString).appendingPathComponent(executableName)
+            if let c = MachOEncryption.cryptid(at: mainPath), c != 0 {
+                encrypted = 1
+            } else {
+                encrypted = 0
+            }
+        }
+
         let containerUUID = (appPath as NSString).pathComponents.dropLast().last ?? appPath
         let id = bundleID.isEmpty ? "\(containerUUID)/\(executableName)" : "\(bundleID)#\(containerUUID)"
 

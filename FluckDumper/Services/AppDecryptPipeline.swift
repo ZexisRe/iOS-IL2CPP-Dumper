@@ -35,7 +35,10 @@ enum AppDecryptPipeline {
             return (nil, "App copy failed: \(error.localizedDescription)")
         }
 
-        let encryptedRel = MachOEncryption.encryptedMachOPaths(inAppBundle: stagedApp)
+        let encryptedRel = MachOEncryption.encryptedMachOPaths(
+            inAppBundle: stagedApp,
+            executableName: target.executableName
+        )
         if !encryptedRel.isEmpty {
             await MainActor.run {
                 onPhase(.decrypting("Decrypting \(encryptedRel.count) Mach-O from memory — keep app open…"))

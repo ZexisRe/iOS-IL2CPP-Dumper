@@ -4,12 +4,18 @@
 import Foundation
 
 enum MachOEncryption {
-    /// Reads LC_ENCRYPTION_INFO_64 cryptid (0 = usable on disk for Il2CppDumper).
+    private static let headerReadLimit = 256 * 1024
+
+    /// Reads LC_ENCRYPTION_INFO cryptid without mapping whole dylibs (avoids OOM on UnityFramework).
     static func cryptid(at path: String) -> UInt32? {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]) else {
-            return nil
-        }
+        guard let data = readHeader(at: path), data.count >= 32 else { return nil }
         return cryptid(in: data)
+    }
+
+    private static func readHeader(at path: String) -> Data? {
+        guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
+        defer { try? handle.close() }
+        return try? handle.read(upToCount: headerReadLimit)
     }
 
     static func cryptid(in data: Data) -> UInt32? {
@@ -33,7 +39,6 @@ enum MachOEncryption {
         let nfat: UInt32 = data.withUnsafeBytes { ptr in
             ptr.load(fromByteOffset: 4, as: UInt32.self).bigEndian
         }
-        var best: UInt32 = 0
         var offset = 8
         for _ in 0..<nfat {
             guard data.count >= offset + 20 else { break }
@@ -42,11 +47,10 @@ enum MachOEncryption {
             }
             if let c = cryptidInMach64(data: data, offset: Int(sliceOffset)) ?? cryptidInMach32(data: data, offset: Int(sliceOffset)) {
                 if c != 0 { return c }
-                best = 0
             }
             offset += 20
         }
-        return best
+        return 0
     }
 
     private static func cryptidInMach64(data: Data, offset: Int) -> UInt32? {
@@ -110,9 +114,10 @@ enum MachOEncryption {
     }
 
     static func isMachO(at path: String) -> Bool {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]),
-              data.count >= 4 else { return false }
-        let magic: UInt32 = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+        guard let handle = FileHandle(forReadingAtPath: path) else { return false }
+        defer { try? handle.close() }
+        guard let chunk = try? handle.read(upToCount: 4), chunk.count == 4 else { return false }
+        let magic: UInt32 = chunk.withUnsafeBytes { $0.load(as: UInt32.self) }
         switch magic {
         case 0xfeedfacf, 0xcffaedfe, 0xfeedface, 0xcefaedfe,
              0xcafebabe, 0xbebafeca:
@@ -122,23 +127,73 @@ enum MachOEncryption {
         }
     }
 
-    /// Paths relative to `.app` root for Mach-O with cryptid ≠ 0.
-    static func encryptedMachOPaths(inAppBundle appPath: String) -> [String] {
-        var out: [String] = []
+    /// Mach-O paths worth checking (main binary, frameworks, plug-ins) — not a full bundle walk.
+    static func machOCandidateRelativePaths(inAppBundle appPath: String, executableName: String) -> [String] {
+        var rels: [String] = []
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(atPath: appPath) else { return out }
-        let skipSuffixes = [".png", ".jpg", ".jpeg", ".plist", ".json", ".txt", ".car", ".metallib", ".ttf", ".otf", ".mp3", ".wav", ".bank", ".assets", ".dat", ".bundle"]
-        for case let rel as String in enumerator {
-            if rel.contains(".app/") { continue }
-            let lower = rel.lowercased()
-            if skipSuffixes.contains(where: { lower.hasSuffix($0) }) { continue }
-            if rel.hasSuffix(".dylib") || rel.hasSuffix(".framework") || rel.hasSuffix(".appex") { /* still walk inside */ }
+        let app = appPath as NSString
+
+        let mainExec = executableName
+        if fm.fileExists(atPath: app.appendingPathComponent(mainExec)) {
+            rels.append(mainExec)
+        }
+
+        let frameworks = app.appendingPathComponent("Frameworks")
+        if let items = try? fm.contentsOfDirectory(atPath: frameworks) {
+            for item in items {
+                if item.hasSuffix(".framework") {
+                    let base = (item as NSString).deletingPathExtension
+                    let candidates = [
+                        "Frameworks/\(item)/\(base)",
+                        "Frameworks/\(item)/\(base).bin",
+                    ]
+                    for rel in candidates where fm.fileExists(atPath: app.appendingPathComponent(rel)) {
+                        rels.append(rel)
+                    }
+                } else if item.hasSuffix(".dylib") {
+                    rels.append("Frameworks/\(item)")
+                }
+            }
+        }
+
+        let plugins = app.appendingPathComponent("PlugIns")
+        if let items = try? fm.contentsOfDirectory(atPath: plugins) {
+            for item in items where item.hasSuffix(".appex") {
+                let appexPath = app.appendingPathComponent("PlugIns/\(item)")
+                let infoPath = (appexPath as NSString).appendingPathComponent("Info.plist")
+                var exec = (item as NSString).deletingPathExtension
+                if let info = NSDictionary(contentsOfFile: infoPath) as? [String: Any],
+                   let name = info["CFBundleExecutable"] as? String {
+                    exec = name
+                }
+                let rel = "PlugIns/\(item)/\(exec)"
+                if fm.fileExists(atPath: app.appendingPathComponent(rel)) {
+                    rels.append(rel)
+                }
+            }
+        }
+
+        return Array(Set(rels)).sorted()
+    }
+
+    /// Paths relative to `.app` root for Mach-O with cryptid ≠ 0.
+    static func encryptedMachOPaths(inAppBundle appPath: String, executableName: String? = nil) -> [String] {
+        let exec: String = {
+            if let executableName, !executableName.isEmpty { return executableName }
+            let infoPath = (appPath as NSString).appendingPathComponent("Info.plist")
+            if let info = NSDictionary(contentsOfFile: infoPath) as? [String: Any],
+               let name = info["CFBundleExecutable"] as? String {
+                return name
+            }
+            return (appPath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
+        }()
+
+        var out: [String] = []
+        for rel in machOCandidateRelativePaths(inAppBundle: appPath, executableName: exec) {
             let full = (appPath as NSString).appendingPathComponent(rel)
-            var isDir: ObjCBool = false
-            guard fm.fileExists(atPath: full, isDirectory: &isDir), !isDir.boolValue else { continue }
             guard isMachO(at: full), let c = cryptid(at: full), c != 0 else { continue }
             out.append(rel)
         }
-        return out.sorted()
+        return out
     }
 }

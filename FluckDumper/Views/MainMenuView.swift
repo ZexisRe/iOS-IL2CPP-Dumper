@@ -37,11 +37,62 @@ final class MainMenuModel: ObservableObject {
     @Published var alertMessage: String?
     @Published var showAlert = false
     @Published var lastOutputPath: String?
+    private var installedListLoaded = false
 
     func refresh() {
-        phase = .scanning
-        games = UnityAppScanner.scan()
-        installedApps = InstalledAppScanner.scan()
+        Task { await refreshAll() }
+    }
+
+    func refreshAll() async {
+        await MainActor.run { phase = .scanning }
+        async let unity = Task.detached(priority: .userInitiated) { UnityAppScanner.scan() }
+        async let installed = Task.detached(priority: .userInitiated) {
+            InstalledAppScanner.scan(checkEncryption: true)
+        }
+        let (gamesResult, appsResult) = await (unity.value, installed.value)
+        await MainActor.run {
+            games = gamesResult
+            installedApps = appsResult
+            installedListLoaded = true
+            reconcileSelection()
+            phase = .idle
+        }
+    }
+
+    /// Fast path at launch — Unity list only; full app list loads when you open Decrypt tab.
+    func refreshOnLaunch() async {
+        await MainActor.run { phase = .scanning }
+        let gamesResult = await Task.detached(priority: .userInitiated) {
+            UnityAppScanner.scan()
+        }.value
+        await MainActor.run {
+            games = gamesResult
+            if selectedId == nil { selectedId = games.first?.id }
+            else if let id = selectedId, !games.contains(where: { $0.id == id }) {
+                selectedId = games.first?.id
+            }
+            phase = .idle
+        }
+    }
+
+    func loadInstalledAppsIfNeeded() async {
+        guard !installedListLoaded else { return }
+        await MainActor.run { phase = .scanning }
+        let appsResult = await Task.detached(priority: .userInitiated) {
+            InstalledAppScanner.scan(checkEncryption: true)
+        }.value
+        await MainActor.run {
+            installedApps = appsResult
+            installedListLoaded = true
+            if decryptSelectedId == nil { decryptSelectedId = installedApps.first?.id }
+            else if let id = decryptSelectedId, !installedApps.contains(where: { $0.id == id }) {
+                decryptSelectedId = installedApps.first?.id
+            }
+            phase = .idle
+        }
+    }
+
+    private func reconcileSelection() {
         if selectedId == nil { selectedId = games.first?.id }
         else if let id = selectedId, !games.contains(where: { $0.id == id }) {
             selectedId = games.first?.id
@@ -50,7 +101,6 @@ final class MainMenuModel: ObservableObject {
         else if let id = decryptSelectedId, !installedApps.contains(where: { $0.id == id }) {
             decryptSelectedId = installedApps.first?.id
         }
-        phase = .idle
     }
 
     func select(_ game: UnityGameTarget) {
@@ -204,7 +254,12 @@ struct MainMenuView: View {
                     if model.isBusy { ProgressView() }
                 }
             }
-            .onAppear { model.refresh() }
+            .onAppear { Task { await model.refreshOnLaunch() } }
+            .onChange(of: model.toolMode) { mode in
+                if mode == .decryptIPA {
+                    Task { await model.loadInstalledAppsIfNeeded() }
+                }
+            }
             .alert("iOS Dumper", isPresented: $model.showAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
