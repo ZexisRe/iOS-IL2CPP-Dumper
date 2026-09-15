@@ -9,8 +9,16 @@ struct InstalledAppTarget: Identifiable, Hashable {
     let bundleIdentifier: String
     let appBundlePath: String
     let executableName: String
-    /// Mach-O binaries inside the bundle with FairPlay cryptid ≠ 0.
-    let encryptedBinaryCount: Int
+    /// Filled at decrypt time; nil in the app list (not scanned at boot).
+    let encryptedBinaryCount: Int?
 
-    var needsMemoryDecrypt: Bool { encryptedBinaryCount > 0 }
+    var needsMemoryDecrypt: Bool {
+        if let encryptedBinaryCount { return encryptedBinaryCount > 0 }
+        return false
+    }
+
+    var encryptionLabel: String {
+        guard let n = encryptedBinaryCount else { return "Tap Decrypt to analyze" }
+        return n > 0 ? "\(n) encrypted — launch app first" : "Ready to pack IPA"
+    }
 }

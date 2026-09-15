@@ -1,27 +1,37 @@
 // iOS IL2CPP Dumper — https://github.com/ZexisRe/iOS-IL2CPP-Dumper
 // Copyright (c) 2026 zexisyy (Zexis). MIT License.
+// App list: Info.plist only (same idea as idump -l / frida-ios-dump listing) — no Mach-O walk.
 
 import Foundation
 
 enum InstalledAppScanner {
-    private static let bundleRoots = ["/var/containers/Bundle/Application"]
+    private static let bundleRoots = [
+        "/var/containers/Bundle/Application",
+        "/Applications",
+    ]
 
-    /// `checkEncryption`: only main executable cryptid (fast). Full list runs at decrypt time.
-    static func scan(checkEncryption: Bool = false) -> [InstalledAppTarget] {
+    static func scan() -> [InstalledAppTarget] {
         var results: [InstalledAppTarget] = []
         var seen = Set<String>()
         let fm = FileManager.default
 
         for root in bundleRoots {
+            guard fm.fileExists(atPath: root) else { continue }
+            if root.hasSuffix("/Applications") {
+                guard let apps = try? fm.contentsOfDirectory(atPath: root) else { continue }
+                for appName in apps where appName.hasSuffix(".app") {
+                    let appPath = (root as NSString).appendingPathComponent(appName)
+                    ingest(appPath: appPath, into: &results, seen: &seen)
+                }
+                continue
+            }
             guard let entries = try? fm.contentsOfDirectory(atPath: root) else { continue }
             for uuid in entries {
                 let appsDir = (root as NSString).appendingPathComponent(uuid)
                 guard let apps = try? fm.contentsOfDirectory(atPath: appsDir) else { continue }
                 for appName in apps where appName.hasSuffix(".app") {
                     let appPath = (appsDir as NSString).appendingPathComponent(appName)
-                    guard let target = parseApp(at: appPath, checkEncryption: checkEncryption),
-                          seen.insert(target.id).inserted else { continue }
-                    results.append(target)
+                    ingest(appPath: appPath, into: &results, seen: &seen)
                 }
             }
         }
@@ -29,31 +39,23 @@ enum InstalledAppScanner {
         return results.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 
-    private static func parseApp(at appPath: String, checkEncryption: Bool) -> InstalledAppTarget? {
+    private static func ingest(appPath: String, into results: inout [InstalledAppTarget], seen: inout Set<String>) {
+        guard let target = parseApp(at: appPath), seen.insert(target.id).inserted else { return }
+        results.append(target)
+    }
+
+    private static func parseApp(at appPath: String) -> InstalledAppTarget? {
         let infoPath = (appPath as NSString).appendingPathComponent("Info.plist")
         guard let info = NSDictionary(contentsOfFile: infoPath) as? [String: Any] else { return nil }
 
         let bundleID = info["CFBundleIdentifier"] as? String ?? ""
-        let displayName = (info["CFBundleDisplayName"] as? String)
-            ?? (info["CFBundleName"] as? String)
+        if bundleID.hasPrefix("com.apple.") && bundleID != "com.apple.AppStore" { return nil }
+
+        let displayName = plistString(info["CFBundleDisplayName"])
+            ?? plistString(info["CFBundleName"])
             ?? (appPath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
         let executableName = info["CFBundleExecutable"] as? String
             ?? (appPath as NSString).lastPathComponent.replacingOccurrences(of: ".app", with: "")
-
-        let encrypted: Int
-        if checkEncryption {
-            encrypted = MachOEncryption.encryptedMachOPaths(
-                inAppBundle: appPath,
-                executableName: executableName
-            ).count
-        } else {
-            let mainPath = (appPath as NSString).appendingPathComponent(executableName)
-            if let c = MachOEncryption.cryptid(at: mainPath), c != 0 {
-                encrypted = 1
-            } else {
-                encrypted = 0
-            }
-        }
 
         let containerUUID = (appPath as NSString).pathComponents.dropLast().last ?? appPath
         let id = bundleID.isEmpty ? "\(containerUUID)/\(executableName)" : "\(bundleID)#\(containerUUID)"
@@ -64,7 +66,13 @@ enum InstalledAppScanner {
             bundleIdentifier: bundleID,
             appBundlePath: appPath,
             executableName: executableName,
-            encryptedBinaryCount: encrypted
+            encryptedBinaryCount: nil
         )
+    }
+
+    private static func plistString(_ value: Any?) -> String? {
+        if let s = value as? String { return s }
+        if let dict = value as? [String: String] { return dict["en"] ?? dict.values.first }
+        return nil
     }
 }
