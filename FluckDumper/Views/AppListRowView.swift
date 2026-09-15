@@ -40,8 +40,9 @@ struct AppListRowView: View {
         }
         .task(id: app.id) {
             let path = app.appBundlePath
+            let bundleID = app.bundleIdentifier
             icon = await Task.detached(priority: .utility) {
-                AppBundleIcon.image(forAppBundlePath: path)
+                AppBundleIcon.image(forAppBundlePath: path, bundleIdentifier: bundleID)
             }.value
         }
     }
@@ -82,8 +83,9 @@ struct SelectedAppHeaderView: View {
         }
         .task(id: app.id) {
             let path = app.appBundlePath
+            let bundleID = app.bundleIdentifier
             icon = await Task.detached(priority: .utility) {
-                AppBundleIcon.image(forAppBundlePath: path)
+                AppBundleIcon.image(forAppBundlePath: path, bundleIdentifier: bundleID)
             }.value
         }
     }
