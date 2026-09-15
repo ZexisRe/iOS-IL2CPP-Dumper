@@ -42,7 +42,7 @@ Logs: `fluck_dump.log` in the same run directory if something fails.
 ## Build from source
 
 ```bash
-git clone https://github.com/zexisyy/FluckExternal.git
+git clone https://github.com/ZexisRe/FluckExternal.git
 cd FluckExternal
 bash build.sh
 ```

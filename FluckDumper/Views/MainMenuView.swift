@@ -201,7 +201,7 @@ struct MainMenuView: View {
                     LabeledContent("App", value: "Fluck External")
                     LabeledContent("Bundle", value: "com.fluck.org")
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2")
-                    Link("GitHub", destination: URL(string: "https://github.com/zexisyy/FluckExternal")!)
+                    Link("GitHub", destination: URL(string: "https://github.com/ZexisRe/FluckExternal")!)
                 }
             }
             .navigationTitle("Fluck External")

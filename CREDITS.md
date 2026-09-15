@@ -2,7 +2,7 @@
 
 ## Fluck External
 
-- **Author / maintainer:** [zexisyy](https://github.com/zexisyy) (Zexis)  
+- **Author / maintainer:** [ZexisRe / zexisyy](https://github.com/ZexisRe) (Zexis)  
 - **Contact:** Telegram [@zexisyy](https://t.me/zexisyy) · Discord `zexisyy_`  
 - **Bundle ID:** `com.fluck.org`
 
