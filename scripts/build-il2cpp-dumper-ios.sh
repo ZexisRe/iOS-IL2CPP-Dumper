@@ -11,7 +11,7 @@ if [[ ! -f "$SRC/Cargo.toml" ]]; then
   exit 1
 fi
 
-export RUSTFLAGS="-C link-arg=-isysroot -C link-arg=$SDK -C link-arg=-miphoneos-version-min=16.0"
+export RUSTFLAGS="-C link-arg=-isysroot -C link-arg=$SDK -C link-arg=-miphoneos-version-min=15.0"
 cd "$SRC"
 "$CARGO" build --release --target aarch64-apple-ios
 

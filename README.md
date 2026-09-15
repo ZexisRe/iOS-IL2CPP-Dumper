@@ -29,7 +29,7 @@ On-device **`dump.cs`** for **Unity IL2CPP**, plus **decrypt any installed app â
 
 ## Requirements
 
-- iOS **16+**
+- iOS **15+**
 - **TrollStore** or rootless jb with filesystem + `task_for_pid` (see `entitlements.plist`)
 - **`/usr/bin/zip`** on device (default on jailbreak)
 
