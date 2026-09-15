@@ -16,6 +16,9 @@
 		A10000072A3C7000001BCB01 /* MachOEncryption.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000082A3C7000001BCB01 /* MachOEncryption.swift */; };
 		A10000092A3C7000001BCB01 /* DumpPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000A2A3C7000001BCB01 /* DumpPipeline.swift */; };
 		A100000B2A3C7000001BCB01 /* MemoryImageDumper.m in Sources */ = {isa = PBXBuildFile; fileRef = A100000C2A3C7000001BCB01 /* MemoryImageDumper.m */; };
+		A10000312A3C7000001BCB01 /* InstalledAppTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000322A3C7000001BCB01 /* InstalledAppTarget.swift */; };
+		A10000332A3C7000001BCB01 /* InstalledAppScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000342A3C7000001BCB01 /* InstalledAppScanner.swift */; };
+		A10000352A3C7000001BCB01 /* AppDecryptPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000362A3C7000001BCB01 /* AppDecryptPipeline.swift */; };
 		0092EE5B2A38AD8500B9F819 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0092EE5A2A38AD8500B9F819 /* Assets.xcassets */; };
 		0092EE5E2A38AD8500B9F819 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0092EE5D2A38AD8500B9F819 /* Preview Assets.xcassets */; };
 		0096B0E62A3B51DC007B54A7 /* AuxiliaryExecute in Frameworks */ = {isa = PBXBuildFile; productRef = 0096B0E52A3B51DC007B54A7 /* AuxiliaryExecute */; };
@@ -35,6 +38,9 @@
 		A100000C2A3C7000001BCB01 /* MemoryImageDumper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MemoryImageDumper.m; sourceTree = "<group>"; };
 		A100000D2A3C7000001BCB01 /* MemoryImageDumper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemoryImageDumper.h; sourceTree = "<group>"; };
 		A100000E2A3C7000001BCB01 /* FluckDumper-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FluckDumper-Bridging-Header.h"; sourceTree = "<group>"; };
+		A10000322A3C7000001BCB01 /* InstalledAppTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppTarget.swift; sourceTree = "<group>"; };
+		A10000342A3C7000001BCB01 /* InstalledAppScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppScanner.swift; sourceTree = "<group>"; };
+		A10000362A3C7000001BCB01 /* AppDecryptPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDecryptPipeline.swift; sourceTree = "<group>"; };
 		0092EE5A2A38AD8500B9F819 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0092EE5D2A38AD8500B9F819 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		3DE674F62A3C61D9001BCB02 /* iOS-Dump */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "iOS-Dump"; path = "FluckDumper/iOS-Dump"; sourceTree = SOURCE_ROOT; };
@@ -80,6 +86,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000042A3C7000001BCB01 /* UnityGameTarget.swift */,
+				A10000322A3C7000001BCB01 /* InstalledAppTarget.swift */,
 				A10000212A3C7000001BCB01 /* DumpOptions.swift */,
 			);
 			path = Models;
@@ -91,6 +98,8 @@
 				A10000062A3C7000001BCB01 /* UnityAppScanner.swift */,
 				A10000082A3C7000001BCB01 /* MachOEncryption.swift */,
 				A100000A2A3C7000001BCB01 /* DumpPipeline.swift */,
+				A10000362A3C7000001BCB01 /* AppDecryptPipeline.swift */,
+				A10000342A3C7000001BCB01 /* InstalledAppScanner.swift */,
 				A10000232A3C7000001BCB01 /* AppBundleIcon.swift */,
 			);
 			path = Services;
@@ -214,6 +223,9 @@
 				A10000072A3C7000001BCB01 /* MachOEncryption.swift in Sources */,
 				A10000092A3C7000001BCB01 /* DumpPipeline.swift in Sources */,
 				A100000B2A3C7000001BCB01 /* MemoryImageDumper.m in Sources */,
+				A10000312A3C7000001BCB01 /* InstalledAppTarget.swift in Sources */,
+				A10000332A3C7000001BCB01 /* InstalledAppScanner.swift in Sources */,
+				A10000352A3C7000001BCB01 /* AppDecryptPipeline.swift in Sources */,
 				0092EE572A38AD8400B9F819 /* FluckDumperApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -360,7 +372,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zexis.iosil2cppdumper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -399,7 +411,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.zexis.iosil2cppdumper;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -1,3 +1,6 @@
+// iOS IL2CPP Dumper — https://github.com/ZexisRe/iOS-IL2CPP-Dumper
+// Copyright (c) 2026 zexisyy (Zexis). MIT License.
+
 import Foundation
 
 enum MachOEncryption {
@@ -104,5 +107,38 @@ enum MachOEncryption {
         guard let chunk = try? handle.read(upToCount: 4), chunk.count == 4 else { return false }
         let sanity = chunk.withUnsafeBytes { $0.load(as: UInt32.self) }
         return sanity == 0xFAB11BAF
+    }
+
+    static func isMachO(at path: String) -> Bool {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: path), options: [.mappedIfSafe]),
+              data.count >= 4 else { return false }
+        let magic: UInt32 = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+        switch magic {
+        case 0xfeedfacf, 0xcffaedfe, 0xfeedface, 0xcefaedfe,
+             0xcafebabe, 0xbebafeca:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Paths relative to `.app` root for Mach-O with cryptid ≠ 0.
+    static func encryptedMachOPaths(inAppBundle appPath: String) -> [String] {
+        var out: [String] = []
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(atPath: appPath) else { return out }
+        let skipSuffixes = [".png", ".jpg", ".jpeg", ".plist", ".json", ".txt", ".car", ".metallib", ".ttf", ".otf", ".mp3", ".wav", ".bank", ".assets", ".dat", ".bundle"]
+        for case let rel as String in enumerator {
+            if rel.contains(".app/") { continue }
+            let lower = rel.lowercased()
+            if skipSuffixes.contains(where: { lower.hasSuffix($0) }) { continue }
+            if rel.hasSuffix(".dylib") || rel.hasSuffix(".framework") || rel.hasSuffix(".appex") { /* still walk inside */ }
+            let full = (appPath as NSString).appendingPathComponent(rel)
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: full, isDirectory: &isDir), !isDir.boolValue else { continue }
+            guard isMachO(at: full), let c = cryptid(at: full), c != 0 else { continue }
+            out.append(rel)
+        }
+        return out.sorted()
     }
 }

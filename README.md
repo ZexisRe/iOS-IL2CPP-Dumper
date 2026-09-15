@@ -1,19 +1,27 @@
 # iOS IL2CPP Dumper
 
-On-device **`dump.cs`** generator for **Unity IL2CPP** games on **jailbroken / TrollStore** iOS.
+On-device **`dump.cs`** for **Unity IL2CPP**, plus **decrypt any installed app → `.ipa`** on **jailbreak / TrollStore** iOS.
 
-**Tags:** `#ios` `#jailbreak` `#trollstore` `#il2cpp` `#unity` `#dumpcs` `#reverseengineering` `#gamehacking` `#iosdumper`
+**Tags:** `#ios` `#jailbreak` `#trollstore` `#il2cpp` `#unity` `#dumpcs` `#ipa` `#decrypt` `#reverseengineering` `#iosdumper`
 
-Maintainer: **zexisyy** (Zexis) · Telegram [@zexisyy](https://t.me/zexisyy) · Discord: `zexisyy_`
+**Author:** **zexisyy** (Zexis) · Telegram [@zexisyy](https://t.me/zexisyy) · Discord: `zexisyy_`
+
+**Fork of:** [34306/unitydump-iOS](https://github.com/34306/unitydump-iOS) — extended and maintained by zexisyy ([CREDITS.md](CREDITS.md))
 
 ---
 
 ## What it does
 
-- Scans installed apps for `global-metadata.dat` + `UnityFramework`
-- **App icons** in the list; **swipe** the card or list rows to pick a game
-- **App Store / FairPlay:** optional **decrypt from memory** (launch game first)
-- Writes **`dump.cs`**, `script.json`, `il2cpp.h`, DummyDll, etc.
+### IL2CPP dump
+- Scans Unity apps for `global-metadata.dat` + `UnityFramework`
+- **App icons** in lists; swipe card or rows to pick a target
+- **FairPlay:** decrypt `UnityFramework` from memory (launch game first)
+- Outputs **`dump.cs`**, `script.json`, `il2cpp.h`, DummyDll, etc.
+
+### Decrypt to IPA
+- Lists **all installed apps** (not only Unity)
+- Copies the app bundle, decrypts **every encrypted Mach-O** from the running process, zips **`Payload/…` → `.ipa`**
+- TrollStore / sideload builds with **cryptid 0** pack without launching
 
 **Bundle ID:** `com.zexis.iosil2cppdumper`
 
@@ -23,7 +31,7 @@ Maintainer: **zexisyy** (Zexis) · Telegram [@zexisyy](https://t.me/zexisyy) · 
 
 - iOS **16+**
 - **TrollStore** or rootless jb with filesystem + `task_for_pid` (see `entitlements.plist`)
-- Unity **IL2CPP** title installed
+- **`/usr/bin/zip`** on device (default on jailbreak)
 
 ---
 
@@ -39,13 +47,15 @@ Or build: `bash build.sh` → `build/iOSIL2CPPDumper.tipa`
 
 1. Open **iOS IL2CPP Dumper**
 2. **Refresh installed apps**
-3. Select target (tap / swipe card / swipe row → Select)
-4. Encrypted App Store build → enable **Decrypt from memory first**, **open the game**, then dump
-5. Output folder (default `/var/mobile/Documents/iOSDumper`)
-6. **Dump IL2CPP** — large games ~1–3 min
-7. Find `dump.cs` under `…/GameName_timestamp/Dump0/dump.cs`
+3. Top segment: **IL2CPP dump** or **Decrypt to IPA**
+4. Pick an app (tap / swipe)
+5. App Store encrypted → **open that app**, then run
+6. Output folder (default `/var/mobile/Documents/iOSDumper`)
 
-Log file on failure: `ios_dumper.log` in that run folder.
+**IL2CPP:** **Dump IL2CPP** → `…/GameName_timestamp/Dump0/dump.cs`  
+**IPA:** **Decrypt app to IPA** → `…/GameName_decrypted_timestamp/GameName_decrypted.ipa`
+
+Log on IL2CPP failure: `ios_dumper.log` in the run folder.
 
 ---
 
@@ -65,4 +75,4 @@ Credits: [CREDITS.md](CREDITS.md) · License: [MIT](LICENSE)
 
 ## Privacy / scope
 
-This repo is **standalone open source**. It does **not** include any private cheat, game mod, or internal product code — only this dumper UI, memory decrypt helper, and open third-party dump tooling listed in CREDITS.
+Standalone open source — dumper UI, memory decrypt helper, and third-party tools listed in CREDITS only. No private cheat or external product code.

@@ -1,3 +1,6 @@
+// iOS IL2CPP Dumper — https://github.com/ZexisRe/iOS-IL2CPP-Dumper
+// Copyright (c) 2026 zexisyy (Zexis). MIT License.
+
 #import "MemoryImageDumper.h"
 
 #import <mach/mach.h>
@@ -159,7 +162,7 @@ NSString *FDMemoryDumpImage(pid_t pid, NSString *sourcePath, NSString *destPath,
         mach_port_deallocate(mach_task_self(), task);
         if (error) {
             *error = [NSError errorWithDomain:@"com.zexis.iosil2cppdumper" code:3
-                                     userInfo:@{NSLocalizedDescriptionKey: @"Could not find UnityFramework in process memory."}];
+                                     userInfo:@{NSLocalizedDescriptionKey: @"Could not find this Mach-O in process memory — keep the app open in foreground."}];
         }
         return nil;
     }

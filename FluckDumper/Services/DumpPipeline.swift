@@ -1,3 +1,6 @@
+// iOS IL2CPP Dumper — https://github.com/ZexisRe/iOS-IL2CPP-Dumper
+// Copyright (c) 2026 zexisyy (Zexis). MIT License.
+
 import Foundation
 import AuxiliaryExecute
 
