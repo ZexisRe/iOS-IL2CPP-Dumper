@@ -1,0 +1,14 @@
+.DS_Store
+build/
+DerivedDataApp/
+*.xcuserstate
+**/xcuserdata/
+*.tipa
+*.ipa
+.idea/
+
+# Legacy Xamarin Il2CppDumper bundle (large; optional local fallback)
+FluckDumper/iOS-Dump/Il2CppDumper
+FluckDumper/iOS-Dump/*.dll
+FluckDumper/iOS-Dump/*.exe
+FluckDumper/iOS-Dump/*.aotdata.*
