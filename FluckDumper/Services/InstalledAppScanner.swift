@@ -58,6 +58,7 @@ enum InstalledAppScanner {
 
         let containerUUID = (appPath as NSString).pathComponents.dropLast().last ?? appPath
         let id = bundleID.isEmpty ? "\(containerUUID)/\(executableName)" : "\(bundleID)#\(containerUUID)"
+        let kind = classify(appPath: appPath, bundleID: bundleID)
 
         return InstalledAppTarget(
             id: id,
@@ -65,8 +66,21 @@ enum InstalledAppScanner {
             bundleIdentifier: bundleID,
             appBundlePath: appPath,
             executableName: executableName,
+            catalogKind: kind,
             encryptedBinaryCount: nil
         )
+    }
+
+    private static func classify(appPath: String, bundleID: String) -> AppCatalogKind {
+        let fm = FileManager.default
+        let container = (appPath as NSString).deletingLastPathComponent
+        let trollMarker = (container as NSString).appendingPathComponent("_TrollStore")
+        if fm.fileExists(atPath: trollMarker) {
+            return .trollstore
+        }
+        if bundleID.hasPrefix("com.apple.") { return .system }
+        if appPath.hasPrefix("/Applications/") { return .system }
+        return .user
     }
 
     private static func plistString(_ value: Any?) -> String? {

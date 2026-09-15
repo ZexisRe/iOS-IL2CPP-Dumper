@@ -3,22 +3,25 @@
 
 import Foundation
 
+enum AppCatalogKind: String, CaseIterable, Identifiable {
+    case user = "User"
+    case system = "System"
+    case trollstore = "TrollStore"
+
+    var id: String { rawValue }
+}
+
 struct InstalledAppTarget: Identifiable, Hashable {
     let id: String
     let displayName: String
     let bundleIdentifier: String
     let appBundlePath: String
     let executableName: String
-    /// Filled at decrypt time; nil in the app list (not scanned at boot).
+    let catalogKind: AppCatalogKind
     let encryptedBinaryCount: Int?
 
     var needsMemoryDecrypt: Bool {
         if let encryptedBinaryCount { return encryptedBinaryCount > 0 }
         return false
-    }
-
-    var encryptionLabel: String {
-        guard let n = encryptedBinaryCount else { return "Tap Decrypt to analyze" }
-        return n > 0 ? "\(n) encrypted — launch app first" : "Ready to pack IPA"
     }
 }

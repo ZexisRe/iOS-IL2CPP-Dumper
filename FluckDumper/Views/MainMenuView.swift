@@ -2,7 +2,6 @@
 // Copyright (c) 2026 zexisyy (Zexis). MIT License.
 
 import SwiftUI
-import UIKit
 
 enum Il2CppProbeUI: Equatable {
     case idle
@@ -15,26 +14,34 @@ enum Il2CppProbeUI: Equatable {
 @MainActor
 final class MainMenuModel: ObservableObject {
     @Published var apps: [InstalledAppTarget] = []
-    @Published var selectedId: String?
+    @Published var catalogKind: AppCatalogKind = .user
     @Published var searchText = ""
     @Published var listLoaded = false
     @Published var isScanning = false
+    @Published var actionApp: InstalledAppTarget?
     @Published var il2cppUI: Il2CppProbeUI = .idle
     @Published private var il2cppProbe: UnityIl2CppProbe.Result = .notUnity
     @AppStorage("outputDirectory") var outputDirectory = "/var/mobile/Documents/iOSDumper"
 
     var selected: InstalledAppTarget? {
-        guard let selectedId else { return nil }
-        return apps.first { $0.id == selectedId }
+        guard let actionApp else { return nil }
+        return actionApp
     }
 
     var filteredApps: [InstalledAppTarget] {
+        var list = apps.filter { $0.catalogKind == catalogKind }
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !q.isEmpty else { return apps }
-        return apps.filter {
-            $0.displayName.lowercased().contains(q)
-                || $0.bundleIdentifier.lowercased().contains(q)
+        if !q.isEmpty {
+            list = list.filter {
+                $0.displayName.lowercased().contains(q)
+                    || $0.bundleIdentifier.lowercased().contains(q)
+            }
         }
+        return list
+    }
+
+    var catalogCounts: [AppCatalogKind: Int] {
+        Dictionary(grouping: apps, by: \.catalogKind).mapValues(\.count)
     }
 
     @Published var phase: DumpPipelinePhase = .idle
@@ -47,43 +54,34 @@ final class MainMenuModel: ObservableObject {
         guard !isScanning else { return }
         Task {
             isScanning = true
-            let result = await Task.detached(priority: .utility) {
+            apps = await Task.detached(priority: .utility) {
                 InstalledAppScanner.scan()
             }.value
-            apps = result
             listLoaded = true
-            if selectedId == nil { selectedId = apps.first?.id }
-            else if let id = selectedId, !apps.contains(where: { $0.id == id }) {
-                selectedId = apps.first?.id
-            }
             isScanning = false
-            if let sel = selected { await probeIl2Cpp(for: sel) }
         }
     }
 
-    func select(_ app: InstalledAppTarget) {
-        selectedId = app.id
+    func openActions(for app: InstalledAppTarget) {
+        actionApp = app
         Task { await probeIl2Cpp(for: app) }
     }
 
     func probeIl2Cpp(for app: InstalledAppTarget) async {
         il2cppUI = .checking
-        let appPath = app.appBundlePath
-        let exec = app.executableName
         let result = await Task.detached(priority: .utility) {
-            UnityIl2CppProbe.probe(appBundlePath: appPath, executableName: exec)
+            UnityIl2CppProbe.probe(appBundlePath: app.appBundlePath, executableName: app.executableName)
         }.value
         il2cppProbe = result
         switch result {
-        case .notUnity:
-            il2cppUI = .notUnity
+        case .notUnity: il2cppUI = .notUnity
         case .il2cpp(_, _, let cryptid):
             il2cppUI = cryptid != 0 ? .encrypted : .readyOnDisk
         }
     }
 
     func exportSelectedApp() {
-        guard let target = selected else { alert("Select an app."); return }
+        guard let target = actionApp ?? selected else { alert("No app."); return }
         isBusy = true
         Task {
             let result = await AppDecryptPipeline.run(target: target, outputRoot: outputDirectory) { [weak self] p in
@@ -100,9 +98,9 @@ final class MainMenuModel: ObservableObject {
     }
 
     func dumpIl2CppOnly() {
-        guard let app = selected else { alert("Select an app."); return }
+        guard let app = actionApp ?? selected else { return }
         guard case .il2cpp = il2cppProbe else {
-            alert("Not a Unity IL2CPP app (no UnityFramework + global-metadata.dat).")
+            alert("Not Unity IL2CPP (no UnityFramework + global-metadata.dat).")
             return
         }
         guard let unityTarget = UnityIl2CppProbe.makeUnityTarget(from: app, probe: il2cppProbe) else { return }
@@ -119,18 +117,17 @@ final class MainMenuModel: ObservableObject {
             isBusy = false
             if let path = result.output {
                 lastOutputPath = path
-                alert("IL2CPP dump done:\n\(path)\n(dump.cs, il2cpp.h, script.json…)")
+                alert("IL2CPP dump done:\n\(path)")
             } else {
                 alert(result.error ?? "Dump failed")
             }
         }
     }
 
-    /// Export decrypted `.app` to Documents, then run IL2CPP dump (decrypts Unity from memory if needed).
     func exportAppAndDumpIl2Cpp() {
-        guard let app = selected else { alert("Select an app."); return }
+        guard let app = actionApp ?? selected else { return }
         guard case .il2cpp = il2cppProbe else {
-            alert("Not a Unity IL2CPP app.")
+            alert("Not Unity IL2CPP.")
             return
         }
         guard let unityTarget = UnityIl2CppProbe.makeUnityTarget(from: app, probe: il2cppProbe) else { return }
@@ -155,9 +152,9 @@ final class MainMenuModel: ObservableObject {
             isBusy = false
             if let path = dump.output {
                 lastOutputPath = path
-                alert("App export + IL2CPP dump done.\nApp: \(export.output!)\nDump: \(path)")
+                alert("Export + dump done.\n\(path)")
             } else {
-                alert("App exported but dump failed:\n\(dump.error ?? "?")")
+                alert("Exported app but dump failed:\n\(dump.error ?? "?")")
             }
         }
     }
@@ -185,86 +182,54 @@ struct MainMenuView: View {
     var body: some View {
         NavigationView {
             List {
-                Section {
-                    Text("Load apps → pick one. IL2CPP is detected per app (UnityFramework + metadata). Encrypted Unity needs the game open first.")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-
-                Section {
-                    if model.isScanning {
-                        HStack {
-                            ProgressView()
-                            Text("Loading apps…")
+                if !model.listLoaded {
+                    Section {
+                        if model.isScanning {
+                            HStack {
+                                ProgressView()
+                                Text("Loading apps…")
+                            }
+                        } else {
+                            Button("Load installed apps") { model.loadApps() }
                         }
-                    } else if !model.listLoaded {
-                        Button("Load installed apps") { model.loadApps() }
                     }
                 }
 
                 if model.listLoaded {
-                    Section("Search & select") {
-                        if let app = model.selected {
-                            SelectedAppHeaderView(
-                                app: app,
-                                il2cppLabel: il2cppStatusText,
-                                il2cppColor: il2cppStatusColor
-                            )
-                        }
-                    }
-
-                    Section("Apps") {
-                        ForEach(model.filteredApps) { app in
-                            Button { model.select(app) } label: {
-                                AppListRowView(app: app, isSelected: model.selectedId == app.id)
+                    Section {
+                        Picker("Category", selection: $model.catalogKind) {
+                            ForEach(AppCatalogKind.allCases) { kind in
+                                let n = model.catalogCounts[kind] ?? 0
+                                Text("\(kind.rawValue) (\(n))").tag(kind)
                             }
                         }
+                        .pickerStyle(.segmented)
+                    }
+
+                    Section {
+                        if model.filteredApps.isEmpty {
+                            Text("No apps in this category.")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(model.filteredApps) { app in
+                                Button {
+                                    model.openActions(for: app)
+                                } label: {
+                                    AppListRowView(app: app, isSelected: false)
+                                }
+                            }
+                        }
+                    } header: {
+                        Text(model.catalogKind.rawValue)
+                    } footer: {
+                        Text("Tap an app for actions (export, IL2CPP dump).")
                     }
                 }
 
-                Section("Output folder") {
-                    TextField("/var/mobile/Documents/iOSDumper", text: $model.outputDirectory)
+                Section("Output") {
+                    TextField("Folder", text: $model.outputDirectory)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                }
-
-                Section("Actions") {
-                    if model.isBusy {
-                        HStack {
-                            ProgressView()
-                            Text(phaseLabel)
-                                .font(.footnote)
-                        }
-                    }
-
-                    Button("Export decrypted .app") {
-                        model.exportSelectedApp()
-                    }
-                    .disabled(model.isBusy || model.selected == nil || !model.listLoaded)
-
-                    Button("Dump IL2CPP (dump.cs + headers)") {
-                        model.dumpIl2CppOnly()
-                    }
-                    .disabled(model.isBusy || model.selected == nil || model.il2cppUI == .notUnity || model.il2cppUI == .checking)
-
-                    Button("Export app + dump IL2CPP") {
-                        model.exportAppAndDumpIl2Cpp()
-                    }
-                    .disabled(model.isBusy || model.selected == nil || model.il2cppUI == .notUnity || model.il2cppUI == .checking)
-
-                    if model.il2cppUI == .encrypted {
-                        Text("FairPlay: open the game, then run dump/export.")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
-
-                    if model.lastOutputPath != nil {
-                        Button("Open in Filza") { model.openOutputInFilza() }
-                    }
-
-                    NavigationLink("Manual IL2CPP paths…") {
-                        Il2CppManualView()
-                    }
                 }
 
                 if model.listLoaded {
@@ -274,9 +239,12 @@ struct MainMenuView: View {
                     }
                 }
             }
-            .searchable(text: $model.searchText, prompt: "App name or bundle id")
+            .searchable(text: $model.searchText, prompt: "Search this category")
             .navigationTitle("iOS Dumper")
             .navigationViewStyle(.stack)
+            .sheet(item: $model.actionApp) { app in
+                AppActionsSheet(model: model, app: app)
+            }
             .alert("iOS Dumper", isPresented: $model.showAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -284,34 +252,5 @@ struct MainMenuView: View {
             }
         }
         .navigationViewStyle(.stack)
-    }
-
-    private var il2cppStatusText: String {
-        switch model.il2cppUI {
-        case .idle: return "Select an app"
-        case .checking: return "Checking IL2CPP…"
-        case .notUnity: return "Not Unity IL2CPP"
-        case .encrypted: return "IL2CPP · encrypted (launch game)"
-        case .readyOnDisk: return "IL2CPP · ready"
-        }
-    }
-
-    private var il2cppStatusColor: Color {
-        switch model.il2cppUI {
-        case .notUnity: return .secondary
-        case .encrypted: return .orange
-        case .readyOnDisk: return .green
-        default: return .secondary
-        }
-    }
-
-    private var phaseLabel: String {
-        switch model.phase {
-        case .idle: return "Working…"
-        case .scanning: return "Scanning…"
-        case .preparing(let s), .decrypting(let s), .dumping(let s): return s
-        case .finished: return "Done"
-        case .failed(let s): return s
-        }
     }
 }
