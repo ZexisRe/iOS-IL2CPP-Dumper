@@ -2,6 +2,7 @@
 set -e
 cd "$(dirname "$0")"
 APP_NAME=FluckDumper
+PRODUCT_TIPA=iOSIL2CPPDumper.tipa
 rm -rf build
 mkdir build
 cd build
@@ -26,6 +27,6 @@ ldid -S"../entitlements.plist" "$TARGET_APP/$APP_NAME"
 
 mkdir Payload
 cp -r "$APP_NAME.app" "Payload/$APP_NAME.app"
-zip -qr "$APP_NAME.tipa" Payload
+zip -qr "$PRODUCT_TIPA" Payload
 rm -rf "$APP_NAME.app" Payload DerivedDataApp
-echo "Built: $(pwd)/$APP_NAME.tipa (com.fluck.org)"
+echo "Built: $(pwd)/$PRODUCT_TIPA (com.zexis.iosil2cppdumper)"

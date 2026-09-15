@@ -124,7 +124,7 @@ static vm_address_t fd_find_remote_image(task_t task, NSData *fileData, size_t m
 NSString *FDMemoryDumpImage(pid_t pid, NSString *sourcePath, NSString *destPath, NSError **error) {
     NSData *fileData = [NSData dataWithContentsOfFile:sourcePath];
     if (!fileData) {
-        if (error) *error = [NSError errorWithDomain:@"com.fluck.org" code:1 userInfo:@{NSLocalizedDescriptionKey: @"Cannot read source Mach-O"}];
+        if (error) *error = [NSError errorWithDomain:@"com.zexis.iosil2cppdumper" code:1 userInfo:@{NSLocalizedDescriptionKey: @"Cannot read source Mach-O"}];
         return nil;
     }
 
@@ -148,7 +148,7 @@ NSString *FDMemoryDumpImage(pid_t pid, NSString *sourcePath, NSString *destPath,
     kern_return_t kr = task_for_pid(mach_task_self(), pid, &task);
     if (kr != KERN_SUCCESS || task == MACH_PORT_NULL) {
         if (error) {
-            *error = [NSError errorWithDomain:@"com.fluck.org" code:2
+            *error = [NSError errorWithDomain:@"com.zexis.iosil2cppdumper" code:2
                                      userInfo:@{NSLocalizedDescriptionKey: @"task_for_pid failed — launch the game first, or check entitlements."}];
         }
         return nil;
@@ -158,7 +158,7 @@ NSString *FDMemoryDumpImage(pid_t pid, NSString *sourcePath, NSString *destPath,
     if (base == 0) {
         mach_port_deallocate(mach_task_self(), task);
         if (error) {
-            *error = [NSError errorWithDomain:@"com.fluck.org" code:3
+            *error = [NSError errorWithDomain:@"com.zexis.iosil2cppdumper" code:3
                                      userInfo:@{NSLocalizedDescriptionKey: @"Could not find UnityFramework in process memory."}];
         }
         return nil;

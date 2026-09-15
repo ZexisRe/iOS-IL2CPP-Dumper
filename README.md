@@ -1,71 +1,68 @@
-# Fluck External
+# iOS IL2CPP Dumper
 
-**Fluck External** (`com.fluck.org`) is an iOS app for **jailbroken / TrollStore** devices that finds Unity IL2CPP games, optionally **decrypts App Store `UnityFramework` from memory**, and writes **`dump.cs`** (plus `script.json`, `il2cpp.h`, DummyDll, etc.) to a folder you choose.
+On-device **`dump.cs`** generator for **Unity IL2CPP** games on **jailbroken / TrollStore** iOS.
 
-Maintainer: **zexisyy** (Zexis)  
-Telegram: [@zexisyy](https://t.me/zexisyy) · Discord: `zexisyy_`
+**Tags:** `#ios` `#jailbreak` `#trollstore` `#il2cpp` `#unity` `#dumpcs` `#reverseengineering` `#gamehacking` `#iosdumper`
+
+Maintainer: **zexisyy** (Zexis) · Telegram [@zexisyy](https://t.me/zexisyy) · Discord: `zexisyy_`
+
+---
+
+## What it does
+
+- Scans installed apps for `global-metadata.dat` + `UnityFramework`
+- **App icons** in the list; **swipe** the card or list rows to pick a game
+- **App Store / FairPlay:** optional **decrypt from memory** (launch game first)
+- Writes **`dump.cs`**, `script.json`, `il2cpp.h`, DummyDll, etc.
+
+**Bundle ID:** `com.zexis.iosil2cppdumper`
 
 ---
 
 ## Requirements
 
-- iPhone/iPad on **iOS 16+** (tested on rootless jb + TrollStore)
-- **TrollStore** (full) or rootless jailbreak with broad file access
-- Unity game installed (IL2CPP — `global-metadata.dat` + `UnityFramework`)
-- For **App Store / FairPlay** builds: **open the game first**, enable **Decrypt from memory first**, then dump
+- iOS **16+**
+- **TrollStore** or rootless jb with filesystem + `task_for_pid` (see `entitlements.plist`)
+- Unity **IL2CPP** title installed
 
 ---
 
-## Install
+## Install (release)
 
-1. Build on Mac: `bash build.sh` → `build/FluckDumper.tipa`
-2. Install with **TrollStore** (`trollstorehelper install …`) or your usual `.tipa` workflow.
+Download **`iOSIL2CPPDumper.tipa`** from [Releases](https://github.com/ZexisRe/iOS-IL2CPP-Dumper/releases) and install with TrollStore.
 
-Entitlements expect a **platform app** with filesystem access and `task_for_pid` (see `entitlements.plist`).
+Or build: `bash build.sh` → `build/iOSIL2CPPDumper.tipa`
 
 ---
 
 ## How to use
 
-1. Open **Fluck External**.
-2. **Refresh installed apps** — Unity targets are detected automatically.
-3. **Choose app**: tap a row, **swipe the top card**, or swipe a row → **Select** / **Next**.
-4. **App Store / encrypted**: turn on **Decrypt from memory first**, **launch the game**, then dump.
-5. Set **output folder** (default `/var/mobile/Documents/FluckDump`).
-6. Tap **Dump IL2CPP** — large games can take 1–3 minutes.
-7. Output is under `…/YourGame_<timestamp>/Dump0/dump.cs` (or `dump.cs` in the run folder for legacy engine).
+1. Open **iOS IL2CPP Dumper**
+2. **Refresh installed apps**
+3. Select target (tap / swipe card / swipe row → Select)
+4. Encrypted App Store build → enable **Decrypt from memory first**, **open the game**, then dump
+5. Output folder (default `/var/mobile/Documents/iOSDumper`)
+6. **Dump IL2CPP** — large games ~1–3 min
+7. Find `dump.cs` under `…/GameName_timestamp/Dump0/dump.cs`
 
-Logs: `fluck_dump.log` in the same run directory if something fails.
+Log file on failure: `ios_dumper.log` in that run folder.
 
 ---
 
 ## Build from source
 
 ```bash
-git clone https://github.com/ZexisRe/FluckExternal.git
-cd FluckExternal
+git clone https://github.com/ZexisRe/iOS-IL2CPP-Dumper.git
+cd iOS-IL2CPP-Dumper
 bash build.sh
 ```
 
-### Bundled IL2CPP engine
+Rebuild bundled engine: `bash scripts/build-il2cpp-dumper-ios.sh`
 
-Release builds include a cross-compiled **`il2cpp_dumper`** binary (Rust). To rebuild it:
-
-```bash
-bash scripts/build-il2cpp-dumper-ios.sh
-cp …/target/aarch64-apple-ios/release/il2cpp_dumper FluckDumper/iOS-Dump/
-```
-
-See [CREDITS.md](CREDITS.md) for upstream licenses.
+Credits: [CREDITS.md](CREDITS.md) · License: [MIT](LICENSE)
 
 ---
 
-## Fork & third-party credits
+## Privacy / scope
 
-This project is a **Fluck-branded** app inspired by the general approach of on-device Unity dump tools. It does **not** ship those projects’ UI or private assets — only **Fluck logo** branding and open components listed in **CREDITS.md**.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE). Third-party binaries and scripts remain under their respective licenses.
+This repo is **standalone open source**. It does **not** include any private cheat, game mod, or internal product code — only this dumper UI, memory decrypt helper, and open third-party dump tooling listed in CREDITS.

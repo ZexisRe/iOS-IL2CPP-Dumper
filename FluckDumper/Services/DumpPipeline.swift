@@ -21,7 +21,7 @@ enum DumpPipeline {
             return (nil, "Cannot create output folder: \(error.localizedDescription)")
         }
 
-        let staging = (NSTemporaryDirectory() as NSString).appendingPathComponent("FluckDumper-\(UUID().uuidString)")
+        let staging = (NSTemporaryDirectory() as NSString).appendingPathComponent("iOSDumper-\(UUID().uuidString)")
         do {
             try fm.createDirectory(atPath: staging, withIntermediateDirectories: true)
         } catch {
@@ -75,7 +75,7 @@ enum DumpPipeline {
         await MainActor.run { onPhase(.dumping("Running IL2CPP dumper (large games take minutes)…")) }
 
         var log = ""
-        let logPath = (outDir as NSString).appendingPathComponent("fluck_dump.log")
+        let logPath = (outDir as NSString).appendingPathComponent("ios_dumper.log")
         let receipt = spawnDumper(
             unity: stagedUnity,
             metadata: stagedMeta,
@@ -93,8 +93,8 @@ enum DumpPipeline {
 
         guard let dumpPath else {
             let hint = log.contains("version[31]")
-                ? "Old Il2CppDumper only — update to Fluck Dump 1.1+."
-                : "See fluck_dump.log in the output folder."
+                ? "Old Il2CppDumper only — update to latest release."
+                : "See ios_dumper.log in the output folder."
             return (nil, "Dump failed — dump.cs was not created. \(hint)\n\(String(log.suffix(500)))")
         }
         let finalDir = (dumpPath as NSString).deletingLastPathComponent

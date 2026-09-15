@@ -6,7 +6,7 @@ final class MainMenuModel: ObservableObject {
     @Published var games: [UnityGameTarget] = []
     @Published var selectedId: String?
     @AppStorage("forceRuntimeDecrypt") var forceRuntimeDecrypt = false
-    @AppStorage("outputDirectory") var outputDirectory = "/var/mobile/Documents/FluckDump"
+    @AppStorage("outputDirectory") var outputDirectory = "/var/mobile/Documents/iOSDumper"
 
     var selected: UnityGameTarget? {
         guard let selectedId else { return nil }
@@ -102,7 +102,7 @@ struct MainMenuView: View {
         NavigationView {
             List {
                 Section {
-                    Text("Fluck External — IL2CPP dump for jailbroken / TrollStore iOS. Swipe the card or list row to change app.")
+                    Text("iOS IL2CPP Dumper — jailbreak / TrollStore. Swipe the card or list row to change app.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
@@ -170,8 +170,8 @@ struct MainMenuView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .disabled(model.isBusy)
-                    Button("Use Documents/FluckDump") {
-                        model.outputDirectory = "/var/mobile/Documents/FluckDump"
+                    Button("Use Documents/iOSDumper") {
+                        model.outputDirectory = "/var/mobile/Documents/iOSDumper"
                     }
                     .disabled(model.isBusy)
                 }
@@ -198,20 +198,20 @@ struct MainMenuView: View {
                 }
 
                 Section("About") {
-                    LabeledContent("App", value: "Fluck External")
-                    LabeledContent("Bundle", value: "com.fluck.org")
+                    LabeledContent("App", value: "iOS IL2CPP Dumper")
+                    LabeledContent("Bundle", value: "com.zexis.iosil2cppdumper")
                     LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2")
-                    Link("GitHub", destination: URL(string: "https://github.com/ZexisRe/FluckExternal")!)
+                    Link("GitHub", destination: URL(string: "https://github.com/ZexisRe/iOS-IL2CPP-Dumper")!)
                 }
             }
-            .navigationTitle("Fluck External")
+            .navigationTitle("iOS Dumper")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if model.isBusy { ProgressView() }
                 }
             }
             .onAppear { model.refresh() }
-            .alert("Fluck External", isPresented: $model.showAlert) {
+            .alert("iOS Dumper", isPresented: $model.showAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(model.alertMessage ?? "")
