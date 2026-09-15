@@ -2,7 +2,7 @@
 
 On-device **`dump.cs`** for **Unity IL2CPP**, plus **decrypt any installed app → `.ipa`** on **jailbreak / TrollStore** iOS.
 
-**Tags:** `#ios` `#jailbreak` `#trollstore` `#il2cpp` `#unity` `#dumpcs` `#ipa` `#decrypt` `#reverseengineering` `#iosdumper`
+**Tags:** `#ios` `#jailbreak` `#jailbroken` `#trollstore` `#il2cpp` `#il2cppdumper` `#iosdumper` `#iosil2cppdumper` `#unity` `#unity3d` `#dumpcs` `#dump` `#ipa` `#decrypt` `#decryption` `#reverseengineering` `#iosre` `#mobile` `#freefire` `#globalmetadata`
 
 **Author:** **zexisyy** (Zexis) · Telegram [@zexisyy](https://t.me/zexisyy) · Discord: `zexisyy_`
 
